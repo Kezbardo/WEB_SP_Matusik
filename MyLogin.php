@@ -35,49 +35,22 @@ class MyLogin
 
     /**
      *  Nastavi do session jmeno uzivatele a datum prihlaseni.
-     *  @param string $userName Jmeno uzivatele.
+     *  @param string $userMail Jmeno uzivatele.
      */
-    public function login(string $userName, string $pass){
-        $conn = openCon();
-        if ($conn != null) {
-            $stmt = $conn->prepare(sprintf("SELECT `user_password` FROM `matusik_users` WHERE `user_email`=\"%s\"", $userName));
-            $stmt->execute();
-            $result = $stmt->setFetchMode(PDO::FETCH_ASSOC);
-            $resulte = $stmt->fetch();
-            echo $resulte ["user_password"];
-            if ($result == $pass) {
-                $data = [self::KEY_NAME => $userName,
-                    self::KEY_DATE => date("d. m. Y, G:i:s")];
-                $this->ses->setSession(self::SESSION_KEY, $data);
-            }
+    public function login(string $userMail, string $pass){
+        $result = getUserPass($userMail);
+        if (password_verify($pass, $result) == true) {
+            $data = [self::KEY_NAME => $userMail,
+                self::KEY_DATE => date("d. m. Y, G:i:s")];
+            $this->ses->setSession(self::SESSION_KEY, $data);
         }
-        $conn = null;
     }
 
     public function register(string $userEmail, string $pass, string $name, string $surname) {
         $conn = openCon();
         if ($conn != null) {
-            $stmt = $conn->prepare(sprintf("SELECT `user_email` FROM `matusik_users`"));
-            $stmt->execute();
-            $result = $stmt->setFetchMode(PDO::FETCH_ASSOC);
-            $newMail = strtolower($userEmail);
-            foreach ($stmt->fetchAll() as $mail) {
-                if ($newMail == $mail ["user_email"]) {
-                    echo "User with given e-mail already exists!";
-                    $conn = null;
-                    return;
-                }
-            }
-            try {
-                // set the PDO error mode to exception
-                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                $sql = sprintf("INSERT INTO `matusik_users` (user_email, user_name, user_password, user_role_id)
-  VALUES (\"%s\", \"%s\", \"%s\", 4)", $newMail, $name . " " . $surname, password_hash($pass, PASSWORD_DEFAULT));
-                // use exec() because no results are returned
-                $conn->exec($sql);
-                echo "New record created successfully";
-            } catch(PDOException $e) {
-                echo $sql . "<br>" . $e->getMessage();
+            if (!userExists($userEmail)) {
+                insertNewUser($userEmail, $name, $surname, $pass);
             }
         }
     }
@@ -91,15 +64,15 @@ class MyLogin
 
     /**
      *  Vrati informace o uzivateli.
-     *  @return string|null  Informace o uzivateli.
+     *  @return array  Informace o uzivateli.
      */
     public function getUserInfo() {
         if(!$this->isUserLogged()) {
             return null;
         }
         $d = $this->ses->readSession(self::SESSION_KEY);
-        return "Jméno: " . $this->getUserName() . "<br>"
-            . "Datum: " . $d[self::KEY_DATE] . "<br>";
+        $email = $d[self::KEY_NAME];
+        return getUserInfo($email);
     }
 
     public function getUserName() {
@@ -107,8 +80,9 @@ class MyLogin
             return null;
         }
         $d = $this->ses->readSession(self::SESSION_KEY);
-        return $d[self::KEY_NAME];
-
+        $email = $d[self::KEY_NAME];
+        return getUserName($email); //handle the database connections in a separate file
     }
+    
 }
 ?>

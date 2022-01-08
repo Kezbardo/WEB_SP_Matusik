@@ -12,74 +12,16 @@ $login = new MyLogin();
     <title>Title</title>
 </head>
 <body>
-<nav class="py-2 bg-light border-bottom">
-    <div class="container d-flex flex-wrap">
-        <ul class="nav me-auto">
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2 active" aria-current="page">Home</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">Features</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">Pricing</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">FAQs</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">About</a></li>
-        </ul>
-
-        <?php
-        if(!$login->isUserLogged()) {
-        ?>
-        <ul class="nav">
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">Login</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">Sign up</a></li>
-        </ul>
-            <?php
-        } else {
-        ?>
-        <div class="dropdown text-end">
-            <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle">
-            </a>
-            <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1" style="">
-                <li><a class="dropdown-item" href="#">New project...</a></li>
-                <li><a class="dropdown-item" href="#">Settings</a></li>
-                <li><a class="dropdown-item" href="#">Profile</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Sign out</a></li>
-            </ul>
-        </div>
-            <?php
-        }
-        ?>
-    </div>
-</nav>
+<?php include "./header.php" ?>
 <?php
     if(!$login->isUserLogged()) {
 ?>
     yinz need to lawg inn
-        <form method="POST">
-            <fieldset>
-                <legend>Přihlášení uživatele</legend>
-                <label> mail
-                    <input type="text" name="jmeno" placeholder="-- zadejte jméno --">
-                </label>
-
-                <label> pass
-                    <input type="text" name="heslo" placeholder="-- zadejte heslo --">
-                </label>
-                <button type="submit" name="action" value="login">
-                    Přihlásit uživatele
-                </button>
-            </fieldset>
-        </form>
+        Konference je pouze pro prihlasene cleny
 <?php
     } else {
 ?>
-    @<?=$login->getUserName()?> yinz logged in and iss lit fam
-        <form method="POST">
-            <fieldset>
-                <legend>Odhlášení uživatele</legend>
-                <button type="submit" name="action" value="logout">
-                    Odhlásit uživatele
-                </button>
-            </fieldset>
-        </form>
+    yinz logged in and iss lit fam
 <?php
     }
 ?>
