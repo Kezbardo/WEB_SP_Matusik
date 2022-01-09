@@ -17,11 +17,25 @@ function openCon()
     }
 }
 
-function getUserInfo(string $userMail) {
+function getUserInfo_mail(string $userMail) {
     $conn = openCon();
     if ($conn != null) {
         $stmt = $conn->prepare(sprintf("SELECT `user_id`,`user_email`,`user_name`,`user_role_id`,`user_not_banned` 
                                         FROM `matusik_users` WHERE `user_email`=\"%s\"", $userMail));
+        $stmt->execute();
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
+}
+
+function getUserInfo_ID(int $userID) {
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare(sprintf("SELECT `user_id`,`user_email`,`user_name`,`user_role_id`,`user_not_banned` 
+                                        FROM `matusik_users` WHERE `user_id`=\"%s\"", $userID));
         $stmt->execute();
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetch();
@@ -120,6 +134,20 @@ function getAllUsers() {
     return "DB connect failure!";
 }
 
+function getAllRolesBelow(int $role_id)
+{
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare(sprintf("SELECT * FROM `matusik_pravo` WHERE `id_pravo`>'%d'", $role_id));
+        $stmt->execute();
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
+}
+
 function banUser(int $user_id) {
     $conn = openCon();
     try {
@@ -145,5 +173,18 @@ function unbanUser(int $user_id) {
         echo $sql . "<br>" . $e->getMessage();
     }
 
+}
+
+function changeRole(int $user_id, int $new_role_id) {
+    $conn = openCon();
+    try {
+        // set the PDO error mode to exception
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $sql = sprintf("UPDATE `matusik_users` SET `user_role_id` = '%d' WHERE `user_id` = '%d';", $new_role_id, $user_id);
+        // use exec() because no results are returned
+        $conn->exec($sql);
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
 }
 ?>

@@ -10,6 +10,11 @@ if(isset($_POST["unban"])) {
 else if (isset($_POST["ban"])) {
     banUser($_POST["ban"]);
 }
+else if (isset($_POST["roleChange"])) {
+    if (getUserInfo_ID($_POST["userRoleChange"])["user_role_id"] != $_POST["roleChange"]) {
+        changeRole($_POST["userRoleChange"], $_POST["roleChange"]);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,8 +59,26 @@ if(!$login->isUserLogged()) {
                     echo "<th scope=\"row\">". $user["user_id"] ."</th>";
                     echo "<td>" . $user["user_email"] .  "</td>";
                     echo "<td>" . $user["user_name"] .  "</td>";
-                    echo "<td>" . getRoleFromID($user["user_role_id"]) .  "</td>";
-                    echo "<td>";
+                    echo "<td>"; //ROLE SWITCH COLUMN
+                    if ($user["user_email"] != $login->getUserInfo()["user_email"]) {
+                        echo "<form method=\"POST\">";
+                        echo "<input type=\"hidden\" name=\"userRoleChange\" value=\"" . $user["user_id"] . "\">";
+                        echo "<div class=\"dropdown show\">
+                        <a class=\"btn btn-secondary dropdown-toggle\" href=\"#\" role=\"button\" id=\"dropdownMenuLinkUID" . $user["user_id"] . "\"  data-bs-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">";
+                        echo getRoleFromID($user["user_role_id"]);
+                        echo "</a>
+                              <div class=\"dropdown-menu\" aria-labelledby=\"dropdownMenuLinkUID" . $user["user_id"] . "\">";
+                        foreach(getAllRolesBelow($login->getUserInfo()["user_role_id"]) as $role) {
+                            echo "<button type=\"submit\" name=\"roleChange\" value=\"" . $role["id_pravo"] . "\" class=\"dropdown-item\" onclick='return confirm(\"Change role of " . $user["user_email"] . "  to " . $role["nazev"] . "?\")'>";
+                            echo $role["nazev"] . "</button>";
+                        }
+                        echo " </div></div></form>";
+                    }
+                    else {
+                        echo getRoleFromID($user["user_role_id"]);
+                    }
+                    echo "</td>"; //ROLE SWITCH COLUMN END
+                    echo "<td>"; //BAN COLUMN
                     echo "<form method=\"POST\">";
                     if ($user["user_email"] != $login->getUserInfo()["user_email"]) {
                         if ($user["user_not_banned"] == 1) {
@@ -67,7 +90,7 @@ if(!$login->isUserLogged()) {
                         echo ($user["user_not_banned"] == 0 ? "Not Banned": "Banned");
                     }
                     echo "</form>";
-                    echo "</td>";
+                    echo "</td>"; //BAN COLUMN END
                     echo "</tr>";
                 }
                 break;
@@ -77,8 +100,38 @@ if(!$login->isUserLogged()) {
                     echo "<th scope=\"row\">". $user["user_id"] ."</th>";
                     echo "<td>" . $user["user_email"] .  "</td>";
                     echo "<td>" . $user["user_name"] .  "</td>";
-                    echo "<td>" . getRoleFromID($user["user_role_id"]) .  "</td>";
-                    echo "<td>" . ($user["user_not_banned"] == 0 ? "Not Banned": "Banned") .  "</td>";
+                    echo "<td>"; //ROLE SWITCH COLUMN
+                    if ($user["user_role_id"] > 2) {
+                        echo "<form method=\"POST\">";
+                        echo "<input type=\"hidden\" name=\"userRoleChange\" value=\"" . $user["user_id"] . "\">";
+                        echo "<div class=\"dropdown show\">
+                        <a class=\"btn btn-secondary dropdown-toggle\" href=\"#\" role=\"button\" id=\"dropdownMenuLinkUID" . $user["user_id"] . "\"  data-bs-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">";
+                        echo getRoleFromID($user["user_role_id"]);
+                        echo "</a>
+                              <div class=\"dropdown-menu\" aria-labelledby=\"dropdownMenuLinkUID" . $user["user_id"] . "\">";
+                        foreach(getAllRolesBelow($login->getUserInfo()["user_role_id"]) as $role) {
+                            echo "<button type=\"submit\" name=\"roleChange\" value=\"" . $role["id_pravo"] . "\" class=\"dropdown-item\" onclick='return confirm(\"Change role of " . $user["user_email"] . "  to " . $role["nazev"] . "?\")'>";
+                            echo $role["nazev"] . "</button>";
+                        }
+                        echo " </div></div></form>";
+                    }
+                    else {
+                        echo getRoleFromID($user["user_role_id"]);
+                    }
+                    echo "</td>"; //ROLE SWITCH COLUMN END
+                    echo "<td>";
+                    echo "<form method=\"POST\">";
+                    if ($user["user_role_id"] > 2) {
+                        if ($user["user_not_banned"] == 1) {
+                            echo "<button type=\"submit\" class=\"btn btn-success\" onclick='return confirm(\"Unban this user?\")' name=\"unban\" value=\"" . $user["user_id"] .  "\">Unban</button>";
+                        } else {
+                            echo "<button type=\"submit\" class=\"btn btn-danger\" onclick='return confirm(\"Ban this user?\")' name=\"ban\" value=\"" . $user["user_id"] .  "\">Ban</button>";
+                        }
+                    } else {
+                        echo ($user["user_not_banned"] == 0 ? "Not Banned": "Banned");
+                    }
+                    echo "</form>";
+                    echo "</td>";
                     echo "</tr>";
                 }
                 break;
