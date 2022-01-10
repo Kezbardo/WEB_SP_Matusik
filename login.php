@@ -30,7 +30,7 @@ if(!$login->isUserLogged()) {
             </label>
 
             <label> pass
-                <input type="text" name="heslo" placeholder="-- zadejte heslo --">
+                <input type="password" name="heslo" placeholder="-- zadejte heslo --">
             </label>
             <button type="submit" name="action" value="login">
                 Přihlásit uživatele
@@ -46,10 +46,10 @@ if(!$login->isUserLogged()) {
             </label>
 
             <label> pass
-                <input type="text" name="heslo" placeholder="-- zadejte heslo --" id="pass1">
+                <input type="password" name="heslo" placeholder="-- zadejte heslo --" id="pass1">
             </label>
             <label> pass2
-                <input type="text" name="heslo2" placeholder="-- zadejte heslo jeste jednou --" id="pass2">
+                <input type="password" name="heslo2" placeholder="-- zadejte heslo jeste jednou --" id="pass2">
             </label>
             <label> name
                 <input type="text" name="jmeno" placeholder="-- zadejte jméno --">
