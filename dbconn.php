@@ -9,6 +9,7 @@ function openCon()
     try {
         $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
         // set the PDO error mode to exception
+        $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $conn;
     } catch(PDOException $e) {
@@ -20,9 +21,10 @@ function openCon()
 function getUserInfo_mail(string $userMail) {
     $conn = openCon();
     if ($conn != null) {
-        $stmt = $conn->prepare(sprintf("SELECT `user_id`,`user_email`,`user_name`,`user_role_id`,`user_not_banned` 
-                                        FROM `matusik_users` WHERE `user_email`=\"%s\"", $userMail));
-        $stmt->execute();
+
+        $stmt = $conn->prepare("SELECT `user_id`,`user_email`,`user_name`,`user_role_id`,`user_not_banned` 
+                                        FROM `matusik_users` WHERE `user_email`=:email");
+        $stmt->execute(['email' => $userMail]);
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetch();
         $conn = null;
@@ -34,9 +36,9 @@ function getUserInfo_mail(string $userMail) {
 function getUserInfo_ID(int $userID) {
     $conn = openCon();
     if ($conn != null) {
-        $stmt = $conn->prepare(sprintf("SELECT `user_id`,`user_email`,`user_name`,`user_role_id`,`user_not_banned` 
-                                        FROM `matusik_users` WHERE `user_id`=\"%s\"", $userID));
-        $stmt->execute();
+        $stmt = $conn->prepare("SELECT `user_id`,`user_email`,`user_name`,`user_role_id`,`user_not_banned` 
+                                        FROM `matusik_users` WHERE `user_id`=:userID");
+        $stmt->execute(['userID' => $userID]);
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetch();
         $conn = null;
@@ -49,8 +51,8 @@ function getUserName(string $userMail)
 {
     $conn = openCon();
     if ($conn != null) {
-        $stmt = $conn->prepare(sprintf("SELECT `user_name` FROM `matusik_users` WHERE `user_email`=\"%s\"", $userMail));
-        $stmt->execute();
+        $stmt = $conn->prepare("SELECT `user_name` FROM `matusik_users` WHERE `user_email`=:email");
+        $stmt->execute(['email' => $userMail]);
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetch();
         $conn = null;
@@ -63,8 +65,8 @@ function getUserPass(string $userMail)
 {
     $conn = openCon();
     if ($conn != null) {
-        $stmt = $conn->prepare(sprintf("SELECT `user_password` FROM `matusik_users` WHERE `user_email`=\"%s\"", $userMail));
-        $stmt->execute();
+        $stmt = $conn->prepare("SELECT `user_password` FROM `matusik_users` WHERE `user_email`=:email");
+        $stmt->execute(['email' => $userMail]);
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetch();
         $conn = null;
@@ -96,12 +98,10 @@ function insertNewUser (string $email, string $name, string $surname, string $pa
     try {
         // set the PDO error mode to exception
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $sql = sprintf("INSERT INTO `matusik_users` 
+        $stmt = $conn->prepare("INSERT INTO `matusik_users` 
                                     (user_email, user_name, user_password, user_role_id, user_not_banned) VALUES 
-                                    (\"%s\", \"%s\", \"%s\", 4, 0)",
-            strtolower($email), $name . " " . $surname, password_hash($pass, PASSWORD_DEFAULT));
-        // use exec() because no results are returned
-        $conn->exec($sql);
+                                    (:email, :uname, :pass, 4, 0)");
+        $stmt->execute(['email' => strtolower($email), 'uname' => $name . " " . $surname, 'pass' => password_hash($pass, PASSWORD_DEFAULT)]);
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
     }
@@ -110,8 +110,8 @@ function insertNewUser (string $email, string $name, string $surname, string $pa
 function getRoleFromID(int $role_id) {
     $conn = openCon();
     if ($conn != null) {
-        $stmt = $conn->prepare(sprintf("SELECT `nazev` FROM `matusik_pravo` WHERE `id_pravo`=\"%d\"", $role_id));
-        $stmt->execute();
+        $stmt = $conn->prepare("SELECT `nazev` FROM `matusik_pravo` WHERE `id_pravo`=:roleID");
+        $stmt->execute(['roleID' => $role_id]);
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetch();
         $conn = null;
@@ -138,8 +138,8 @@ function getAllRolesBelow(int $role_id)
 {
     $conn = openCon();
     if ($conn != null) {
-        $stmt = $conn->prepare(sprintf("SELECT * FROM `matusik_pravo` WHERE `id_pravo`>'%d'", $role_id));
-        $stmt->execute();
+        $stmt = $conn->prepare("SELECT * FROM `matusik_pravo` WHERE `id_pravo`> :roleID");
+        $stmt->execute(['roleID' => $role_id]);
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetchAll();
         $conn = null;
@@ -151,11 +151,8 @@ function getAllRolesBelow(int $role_id)
 function banUser(int $user_id) {
     $conn = openCon();
     try {
-        // set the PDO error mode to exception
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $sql = sprintf("UPDATE `matusik_users` SET `user_not_banned` = '1' WHERE `user_id` = '%d';", $user_id);
-        // use exec() because no results are returned
-        $conn->exec($sql);
+        $stmt = $conn->prepare("UPDATE `matusik_users` SET `user_not_banned` = '1' WHERE `user_id` = :userID;");
+        $stmt->execute(['userID' => $user_id]);
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
     }
@@ -164,11 +161,8 @@ function banUser(int $user_id) {
 function unbanUser(int $user_id) {
     $conn = openCon();
     try {
-        // set the PDO error mode to exception
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $sql = sprintf("UPDATE `matusik_users` SET `user_not_banned` = '0' WHERE `user_id` = '%d';", $user_id);
-        // use exec() because no results are returned
-        $conn->exec($sql);
+        $stmt = $conn->prepare("UPDATE `matusik_users` SET `user_not_banned` = '0' WHERE `user_id` = :userID;");
+        $stmt->execute(['userID' => $user_id]);
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
     }
@@ -178,11 +172,125 @@ function unbanUser(int $user_id) {
 function changeRole(int $user_id, int $new_role_id) {
     $conn = openCon();
     try {
-        // set the PDO error mode to exception
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $sql = sprintf("UPDATE `matusik_users` SET `user_role_id` = '%d' WHERE `user_id` = '%d';", $new_role_id, $user_id);
+        $stmt = $conn->prepare("UPDATE `matusik_users` SET `user_role_id` = :roleID WHERE `user_id` = :userID;");
+        $stmt->execute(['roleID' => $new_role_id, 'userID' => $user_id]);
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+}
+
+function createNewArticle(string $authorName, string $articleName, string $content, string $newFile, int $user_id)
+{
+    $conn = openCon();
+    try {
+        $stmt = $conn->prepare("INSERT INTO `matusik_clanky` 
+                                    (user_id, article_authors, article_name, article_abstract, article_filename, article_approved) VALUES 
+                                    (:userID, :authors, :articleName, :abstract, :article_filename, 0)");
         // use exec() because no results are returned
-        $conn->exec($sql);
+        $stmt->execute([
+            'userID' => $user_id, 'authors' => $authorName,
+            'articleName' => $articleName, 'abstract' => $content, 'article_filename' => $newFile ]);
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+}
+
+function getAllMyReviews(int $user_id) {
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare("SELECT * FROM `matusik_recenze` WHERE `reviewer_id`= :roleID");
+        $stmt->execute(['roleID' => $user_id]);
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
+}
+
+function getArticleInfo(int $article_id) {
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare("SELECT `article_authors`, `article_name`, `article_abstract`, `article_filename` FROM `matusik_clanky` WHERE `article_id`= :articleID");
+        $stmt->execute(['articleID' => $article_id]);
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result[0];
+    }
+    return "DB connect failure!";
+
+}
+
+function getAllArticleReviews(int $article_id) {
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare("SELECT * FROM `matusik_recenze` WHERE `article_id`= :articleID");
+        $stmt->execute(['articleID' => $article_id]);
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
+}
+
+
+function getAllArticles() {
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare("SELECT * FROM `matusik_clanky`");
+        $stmt->execute();
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
+}
+
+
+function getAllReviewers()
+{
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare("SELECT * FROM `matusik_users` WHERE `user_role_id` = 3");
+        $stmt->execute();
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
+
+}
+
+function canBeAdded(int $reviewID, int $articleID)
+{
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare("SELECT * FROM `matusik_recenze` WHERE `reviewer_id` = :reviewer AND `article_id` = :articleID");
+        $stmt->execute(['reviewer' => $reviewID,
+                        'articleID' => $articleID]);
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
+
+}
+
+
+function addNewReviewer(int $newReviewerID, int $reviewerArticleID)
+{
+    $conn = openCon();
+    try {
+        $stmt = $conn->prepare("INSERT INTO `matusik_recenze` 
+                                    (article_id, reviewer_id) VALUES 
+                                    (:articleID, :reviewerID)");
+        // use exec() because no results are returned
+        $stmt->execute(['articleID' => $reviewerArticleID, 'reviewerID' => $newReviewerID]);
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
     }

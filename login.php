@@ -21,7 +21,7 @@ $login = new MyLogin;
 <?php
 if(!$login->isUserLogged()) {
     ?>
-    yinz need to lawg inn
+        Prihlaseni
     <form method="POST">
         <fieldset>
             <legend>Přihlášení uživatele</legend>
@@ -37,7 +37,7 @@ if(!$login->isUserLogged()) {
             </button>
         </fieldset>
     </form>
-    yinz wanna register first?
+    Registrace
     <form method="POST">
         <fieldset>
             <legend>Registrace noveho uživatele</legend>
@@ -66,7 +66,7 @@ if(!$login->isUserLogged()) {
     <?php
 } else {
     ?>
-    @<?=$login->getUserName()?> yinz logged in and iss lit fam
+    @<?=$login->getUserName()?>
     <form method="POST">
         <fieldset>
             <legend>Odhlášení uživatele</legend>

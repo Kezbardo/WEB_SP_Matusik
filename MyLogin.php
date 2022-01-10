@@ -72,7 +72,7 @@ class MyLogin
         }
         $d = $this->ses->readSession(self::SESSION_KEY);
         $email = $d[self::KEY_NAME];
-        return getUserInfo($email);
+        return getUserInfo_mail($email);
     }
 
     public function getUserName() {
@@ -83,6 +83,6 @@ class MyLogin
         $email = $d[self::KEY_NAME];
         return getUserName($email); //handle the database connections in a separate file
     }
-    
+
 }
 ?>
