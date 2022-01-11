@@ -5,7 +5,7 @@ function uploadFile()
     $target_file_name = substr(uniqid(pathinfo(basename($_FILES["fileToUpload"]["name"]), PATHINFO_FILENAME) . "_"), 0, -3) . ".pdf";
     $target_file = $target_dir . $target_file_name;
     $uploadOk = 1;
-    $fileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+    $fileType = strtolower(pathinfo(basename($_FILES["fileToUpload"]["name"]), PATHINFO_EXTENSION));
 
 // Check if file already exists
     if (file_exists($target_file)) {
@@ -37,6 +37,6 @@ function uploadFile()
             echo "Sorry, there was an error uploading your file.";
         }
     }
-    return "";
+    return false;
 }
 ?>

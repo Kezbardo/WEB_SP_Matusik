@@ -1,29 +1,38 @@
 <?php
-/*
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-*/
+
 // nacteni souboru s funkcemi loginu (pracuje se session)
 require_once("MyLogin.php");
 require_once("upload.php");
 $login = new MyLogin();
 
-$formOK = true;
-foreach ($_POST as $formField) {
-    if (empty($formField)) {
-        echo "One of the fields was left blank!";
-        $formOK = false;
+if (isset($_POST["authorName"])) {
+    $formOk = true;
+    foreach ($_POST as $formField) {
+        if (empty($formField)) {
+            echo "One of the fields was left blank!";
+            $formOk = false;
+            break;
+        }
     }
-}
-
-if (isset($_POST["authorName"]) && $formOK) {
-    $newFile = uploadFile();
-    createNewArticle($_POST["authorName"],$_POST["articleName"],$_POST["content"],$newFile,$login->getUserInfo()["user_id"]);
+    if ($formOk) {
+        $newFile = uploadFile();
+        if ($newFile != false) {
+            createNewArticle($_POST["authorName"], $_POST["articleName"], $_POST["articleContent"], $newFile, $login->getUserInfo()["user_id"]);
+        }
+    }
 }
 
 if (isset($_POST["newReviewerID"]) && is_numeric($_POST["newReviewerID"]) == true) {
     addNewReviewer($_POST["newReviewerID"], $_POST["reviewerArticleID"]);
+}
+
+
+if (isset($_POST["quality"])) {
+    updateRating($_POST["quality"], $_POST["formality"], $_POST["novelty"], $_POST["linguistic"], $_POST["reviewContent"], $_POST["reviewID"]);
 }
 ?>
 <!DOCTYPE html>
@@ -66,12 +75,44 @@ function scoreToStars(float $score) {
     return $returnString;
 }
 
-function getReviewEditCard(array $review)
+function getReviewEditCard(array $review): string
 {
-    return "";
+    $reviewCard = "<div class =\"container\"><form method=\"POST\"><div class=\"row\"><div class=\"col\">";
+    $reviewCard .= "<input type=\"hidden\" name=\"reviewID\" value=\"" . $review["review_id"] . "\">";
+    $reviewCard .= "<div class=\"row\"><div class=\"col\"><label for='quality'>Kvalita obsahu:</label></div><div class=\"col\">
+        <input type=\"number\" id=\"quality\" name=\"quality\" min=\"0.0\" max=\"5\" step=\"0.5\" value=\"".(($review["rating_quality"] != null)?$review["rating_quality"]:0)."\">";
+    $reviewCard .= "</div></div><div class=\"row\"><div class=\"col\"><label for='formality'>Formální úroveň:</label></div><div class=\"col\">
+            <input type=\"number\" id=\"formality\" name=\"formality\" min=\"0.0\" max=\"5\" step=\"0.5\" value=\"".(($review["rating_formality"] != null)?$review["rating_formality"]:0)."\">";
+    $reviewCard .= "</div></div><div class=\"row\"><div class=\"col\"><label for='novelty'>Novost:</label></div><div class=\"col\">
+            <input type=\"number\" id=\"novelty\" name=\"novelty\" min=\"0.0\" max=\"5\" step=\"0.5\" value=\"".(($review["rating_novelty"] != null)?$review["rating_novelty"]:0)."\">";
+    $reviewCard .= "</div></div><div class=\"row\"><div class=\"col\"><label for='linguistic'>Kvalita jazyka:</label></div><div class=\"col\">
+            <input type=\"number\" id=\"linguistic\" name=\"linguistic\" min=\"0.0\" max=\"5\" step=\"0.5\" value=\"".(($review["rating_linguistic"] != null)?$review["rating_linguistic"]:0)."\">";
+    $reviewCard .= "</div></div>"; //first column end
+    $reviewCard .= "<button type=\"submit\" class=\"btn btn-success\" value=\"Nahrát Recenzi\">Odeslat recenzi</button><button type=\"reset\" class=\"btn btn-danger\">Vrátit změny</button>";
+    $reviewCard .= "</div><div class=\"col\"><textarea name=\"reviewContent\" id=\"editorReview". $review["review_id"] . "\">
+                        " . (($review["review_comment"] != null)?$review["review_comment"]:"<p>Vložte k recenzi komentář.</p>") . "
+                    </textarea>
+                    <script>
+                        let editor". $review["review_id"] . ";
+                        ClassicEditor
+                            .create(document.querySelector('#editorReview". $review["review_id"] . "'), {
+                                toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ]
+                            }).then(newEditor => {
+                                editor = newEditor;
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+                        var btnEl = document.querySelector('#submit');
+                        btnEl.addEventListener('click', function () {
+                            editor.updateSourceElement();
+                        })
+                    </script></div>";
+    $reviewCard .= "</div></form></div>";
+    return $reviewCard;
 }
 
-function getReviewStars(mixed $review) {
+function getReviewStars(array $review) {
     $retstr = "Hodnoceni: ";
     $incrementer = 'A';
     foreach (getAllArticleReviews($review["article_id"]) as $reviewStars) {
@@ -87,6 +128,17 @@ function getReviewStars(mixed $review) {
     return $retstr;
 }
 
+function getReviewStars_aID(int $articleID) {
+    $retstr = "Hodnoceni: ";
+    $incrementer = 'A';
+    foreach (getAllArticleReviews($articleID) as $reviewStars) {
+        //display black badge with star rating
+        $retstr .= "<span class=\"badge badge-secondary\">" . $incrementer . " " . scoreToStars(getReviewOverallScore($reviewStars)) . "</span>";
+        $incrementer++;
+    }
+    return $retstr;
+}
+
 
 
 
@@ -97,40 +149,80 @@ if(!$login->isUserLogged()) {
 } else {
     switch ($login->getUserInfo()["user_role_id"]) {
         case 4:
-    ?>
-        <!-- AUTHOR VIEW OF PAGE -->
-        Nahrani noveho clanku:
-    <form method="POST" enctype="multipart/form-data">
-        <label> Jmena autoru
-            <input type="text" name="authorName" id="authorName"></label>
-        <label> Jmeno clanku
-            <input type="text" name="articleName" id="articleName"></label>
-        <label> Abstrakt
-            <textarea name="content" id="editor">
+            echo "<a class=\"btn btn-primary\" data-bs-toggle=\"collapse\" href=\"#collapseNewArticle\" role=\"button\" aria-expanded=\"false\" aria-controls=\"collapseExample\">
+                        Nahrát nový článek
+                      </a>";
+            echo "</p>";
+            echo "<div class=\"collapse\" id=\"collapseNewArticle\">
+                        <div class=\"card card-body text-black\">"; ?>
+            <form method="POST" enctype="multipart/form-data">
+                <label> Jmena autoru
+                    <input type="text" name="authorName" id="authorName"></label>
+                <label> Jmeno clanku
+                    <input type="text" name="articleName" id="articleName"></label>
+                <label> Abstrakt
+                    <textarea name="articleContent" id="editorArticle">
                         Abstrakt clanku zde:
             </textarea>
-            <script>
-                let editor;
-                ClassicEditor
-                    .create(document.querySelector('#editor'), {
-                        toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ]
-                    }).then(newEditor => {
-                    editor = newEditor;
-                })
-                    .catch(error => {
-                        console.error(error);
-                    });
+                    <script>
+                        let editor;
+                        ClassicEditor
+                            .create(document.querySelector('#editorArticle'), {
+                                toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ]
+                            }).then(newEditor => {
+                            editor = newEditor;
+                        })
+                            .catch(error => {
+                                console.error(error);
+                            });
 
-                var btnEl = document.querySelector('#submit');
-                btnEl.addEventListener('click', function () {
-                    editor.updateSourceElement();
-                })
-            </script>
-        </label>
-        <label> Clanek (format PDF, max. velikost 5MB)
-            <input type="file" name="fileToUpload" id="fileToUpload"></label>
-        <input type="submit" value="Upload Image" name="submit" onclick="return verifyFields()" id="submit">
-    </form>
+                        var btnEl = document.querySelector('#submit');
+                        btnEl.addEventListener('click', function () {
+                            editor.updateSourceElement();
+                        })
+                    </script>
+                </label>
+                <label> Clanek (format PDF, max. velikost 5MB)
+                    <input type="file" name="fileToUpload" id="fileToUpload"></label>
+                <input type="submit" value="Nahrát Článek" name="submit" onclick="return verifyFields()" id="submit">
+            </form>
+                        <?php
+            echo "</div> smilers
+                      </div> smilers</div> smilers";
+            foreach(getAllMyArticles($login->getUserInfo()["user_id"]) as $article ) {
+                echo "<div class=\"container-fluid border bg-secondary text-white\">";
+                //DISPLAY ARTICLE RATING
+                echo "<div class=\"container-fluid\">";
+                if ($article["article_approved"] == 0) {
+                    //show review info, denied
+                    echo "<div class=\"container-fluid bg-danger text-white\">";
+                    echo getReviewStars_aID($article["article_id"]);
+                    echo "<span class=\"badge alert-danger\">Status: zamitnuto</span>";
+                    echo "</div>";
+                } else if ($article["article_approved"] == 1) {
+                    //show review info, accepted
+                    echo "<div class=\"container-fluid bg-success text-white\">";
+                    echo getReviewStars_aID($article["article_id"]);
+                    echo "<span class=\"badge alert-success\">Status: akceptovano</span>";
+                    echo "</div>";
+                } else {
+                    //show review info, undecided
+                    echo "<div class=\"container-fluid bg-info text-white\">";
+                    echo getReviewStars_aID($article["article_id"]);
+                    echo "<span class=\"badge alert-info\">Status: Ceka na rozhodnuti</span>";
+                    echo "</div>";
+                }
+                echo "</div>";
+                //DISPLAY ARTICLE INFO
+                echo "<p><u><em>" . $article["article_authors"] . "</em>: " . $article["article_name"] . "</u></p>";
+                echo "<strong>Abstrakt:</strong>" . $article["article_abstract"];
+                echo "<p><a class=\"btn btn-success\" href=\"data/" . $article["article_filename"] .  "\" download=\"\">Download</a>";
+                echo "</p>";
+                echo "</div>";
+            }
+    ?>
+        <!-- AUTHOR VIEW OF PAGE -->
+
     <?php
             break;
         case 3:
@@ -180,7 +272,6 @@ if(!$login->isUserLogged()) {
                 echo "<div class=\"collapse\" id=\"collapseExample" . $review["article_id"] . "\">
                         <div class=\"card card-body text-black\">
                         " . getReviewEditCard($review) . "
-    Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
                         </div>
                       </div></div>";
             }

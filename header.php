@@ -37,9 +37,7 @@ if(isset($_POST["action"])){
         <ul class="nav me-auto">
             <li class="nav-item"><a href="index.php" class="nav-link link-dark px-2 active" aria-current="page">Home</a></li>
             <li class="nav-item"><a href="clanky.php" class="nav-link link-dark px-2">Clanky</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">Recenze</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">FAQs</a></li>
-            <li class="nav-item"><a href="#" class="nav-link link-dark px-2">About</a></li>
+            <li><a class="nav-item" href="uzivatele.php">Uzivatele</a></li>
         </ul>
 
         <?php
@@ -47,7 +45,6 @@ if(isset($_POST["action"])){
             ?>
             <ul class="nav">
                 <li class="nav-item"><a href="login.php" class="nav-link link-dark px-2">Login</a></li>
-                <li class="nav-item"><a href="#" class="nav-link link-dark px-2">Sign up</a></li>
             </ul>
             <?php
         } else {
@@ -60,9 +57,7 @@ if(isset($_POST["action"])){
                     ?>
                 </a>
                 <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1" style="">
-                    <li><a class="dropdown-item" href="#">New project...</a></li>
-                    <li><a class="dropdown-item" href="uzivatele.php">Uzivatele</a></li>
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <!--<li><a class="dropdown-item" href="#">Profile</a></li>-->
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form method="POST">

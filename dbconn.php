@@ -198,8 +198,8 @@ function createNewArticle(string $authorName, string $articleName, string $conte
 function getAllMyReviews(int $user_id) {
     $conn = openCon();
     if ($conn != null) {
-        $stmt = $conn->prepare("SELECT * FROM `matusik_recenze` WHERE `reviewer_id`= :roleID");
-        $stmt->execute(['roleID' => $user_id]);
+        $stmt = $conn->prepare("SELECT * FROM `matusik_recenze` WHERE `reviewer_id`= :userID");
+        $stmt->execute(['userID' => $user_id]);
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $result = $stmt->fetchAll();
         $conn = null;
@@ -294,5 +294,34 @@ function addNewReviewer(int $newReviewerID, int $reviewerArticleID)
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
     }
+}
+
+function updateRating(float $quality, float $formality, float $novelty, float $linguistic, string $reviewContent, int $reviewID)
+{
+    $conn = openCon();
+    try {
+        $stmt = $conn->prepare("UPDATE `matusik_recenze` SET `rating_quality` = :rQuality,`rating_formality` = :rFormality,
+                                `rating_novelty` = :rNovelty,`rating_linguistic` = :rLinguistic,`review_comment` = :rComment 
+                                WHERE `review_id` = :rID;");
+        $stmt->execute(['rQuality' => $quality, 'rFormality' => $formality,
+                        'rNovelty' => $novelty, 'rLinguistic' => $linguistic,
+                        'rComment' => $reviewContent, 'rID' => $reviewID]);
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+}
+
+function getAllMyArticles(int $user_id)
+{
+    $conn = openCon();
+    if ($conn != null) {
+        $stmt = $conn->prepare("SELECT * FROM `matusik_clanky` WHERE `user_id`= :userID");
+        $stmt->execute(['userID' => $user_id]);
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll();
+        $conn = null;
+        return $result;
+    }
+    return "DB connect failure!";
 }
 ?>
