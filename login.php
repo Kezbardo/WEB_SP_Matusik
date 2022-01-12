@@ -21,7 +21,6 @@ $login = new MyLogin;
 <?php
 if(!$login->isUserLogged()) {
     ?>
-        Prihlaseni
     <form method="POST">
         <fieldset>
             <legend>Přihlášení uživatele</legend>
@@ -37,7 +36,6 @@ if(!$login->isUserLogged()) {
             </button>
         </fieldset>
     </form>
-    Registrace
     <form method="POST">
         <fieldset>
             <legend>Registrace noveho uživatele</legend>

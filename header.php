@@ -36,8 +36,8 @@ if(isset($_POST["action"])){
     <div class="container d-flex flex-wrap">
         <ul class="nav me-auto">
             <li class="nav-item"><a href="index.php" class="nav-link link-dark px-2 active" aria-current="page">Home</a></li>
-            <li class="nav-item"><a href="clanky.php" class="nav-link link-dark px-2">Clanky</a></li>
-            <li><a class="nav-item" href="uzivatele.php">Uzivatele</a></li>
+            <li class="nav-item"><a href="clanky.php" class="nav-link link-dark px-2">Články</a></li>
+            <li class="nav-item"><a href="uzivatele.php" class="nav-link link-dark px-2">Uživatelé</a></li>
         </ul>
 
         <?php
@@ -58,7 +58,6 @@ if(isset($_POST["action"])){
                 </a>
                 <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1" style="">
                     <!--<li><a class="dropdown-item" href="#">Profile</a></li>-->
-                    <li><hr class="dropdown-divider"></li>
                     <li>
                         <form method="POST">
                             <button type="submit" name="action" value="logout" class="dropdown-item">

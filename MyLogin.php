@@ -1,5 +1,4 @@
 <?php
-include "dbconn.php";
 class MyLogin
 {
 

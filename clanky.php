@@ -1,9 +1,9 @@
 <?php
-
+/*
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
+*/
 // nacteni souboru s funkcemi loginu (pracuje se session)
 require_once("MyLogin.php");
 require_once("upload.php");
@@ -47,7 +47,9 @@ if (isset($_POST["quality"])) {
 </head>
 <body class="bg-light">
 <?php include "./header.php" ?>
+<h3>Články</h3>
 <?php
+
 function getReviewOverallScore(array $review)
 {
     $returnVal = $review["rating_quality"] + $review["rating_formality"] + $review["rating_novelty"] + $review["rating_linguistic"];
@@ -155,12 +157,21 @@ if(!$login->isUserLogged()) {
             echo "</p>";
             echo "<div class=\"collapse\" id=\"collapseNewArticle\">
                         <div class=\"card card-body text-black\">"; ?>
+        <div class="container-fluid">
             <form method="POST" enctype="multipart/form-data">
-                <label> Jmena autoru
-                    <input type="text" name="authorName" id="authorName"></label>
-                <label> Jmeno clanku
-                    <input type="text" name="articleName" id="articleName"></label>
-                <label> Abstrakt
+                <div class="row">
+                <div class="col">
+                    <div class="row"><div class="col-5">
+                <label for="authorName"> Jmena autoru </label></div><div class="col">
+                            <input type="text" name="authorName" id="authorName"></div></div><div class="row"><div class="col-5">
+                <label for="articleName"> Jmeno clanku </label></div><div class="col">
+                    <input type="text" name="articleName" id="articleName"></div></div><div class="row"><div class="col-5">
+                <label for="fileToUpload"> Clanek (format PDF, max. velikost 5MB) </label></div><div class="col">
+                                    <input type="file" name="fileToUpload" id="fileToUpload"></div></div>
+                <input type="submit" class="btn btn-primary" value="Nahrát Článek" name="submit" onclick="return verifyFields()" id="submit">
+                    </div>
+                <div class="col">
+                <label for="editorArticle"> Abstrakt  </label>
                     <textarea name="articleContent" id="editorArticle">
                         Abstrakt clanku zde:
             </textarea>
@@ -181,14 +192,13 @@ if(!$login->isUserLogged()) {
                             editor.updateSourceElement();
                         })
                     </script>
-                </label>
-                <label> Clanek (format PDF, max. velikost 5MB)
-                    <input type="file" name="fileToUpload" id="fileToUpload"></label>
-                <input type="submit" value="Nahrát Článek" name="submit" onclick="return verifyFields()" id="submit">
+                </div>
+                </div>
             </form>
+        </div>
                         <?php
-            echo "</div> smilers
-                      </div> smilers</div> smilers";
+            echo "</div>
+                      </div></div>";
             foreach(getAllMyArticles($login->getUserInfo()["user_id"]) as $article ) {
                 echo "<div class=\"container-fluid border bg-secondary text-white\">";
                 //DISPLAY ARTICLE RATING
@@ -234,19 +244,19 @@ if(!$login->isUserLogged()) {
                 $article = getArticleInfo($review["article_id"]);
                 //DISPLAY ARTICLE RATING
                 echo "<div class=\"container-fluid\">";
-                if ($review["rating_quality"] == null ) {
+                if ($review["rating_quality"] == null) {
                     //review hasn't been completed yet by this reviewer
                     echo "<div class=\"container-fluid bg-info text-white\">";
                     echo "Hodnoceni: ceka na posouzeni";
                     echo "</div>";
                 } else {
-                    if ($review["review_verdict"] == 0) {
+                    if ($article["article_approved"] == 0) {
                         //show review info, denied
                         echo "<div class=\"container-fluid bg-danger text-white\">";
                         echo getReviewStars($review);
                         echo "<span class=\"badge alert-danger\">Status: zamitnuto</span>";
                         echo "</div>";
-                    } else if ($review["review_verdict"] == 1) {
+                    } else if ($article["article_approved"] == 1) {
                         //show review info, accepted
                         echo "<div class=\"container-fluid bg-success text-white\">";
                         echo getReviewStars($review);
@@ -362,8 +372,6 @@ foreach (getAllArticles() as $article) {
 }
 ?>
 <!-- END OF MOD+ADMIN VIEW OF PAGE -->
-<br>
-CLANKY
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 </body>
 </html>

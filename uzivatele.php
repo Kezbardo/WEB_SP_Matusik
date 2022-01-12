@@ -29,13 +29,30 @@ else if (isset($_POST["roleChange"])) {
 <?php include "./header.php" ?>
 
 <?php
+function getSwitchRoleDropdown(array $user)
+{
+    global $login;
+    echo "<form method=\"POST\">";
+    echo "<input type=\"hidden\" name=\"userRoleChange\" value=\"" . $user["user_id"] . "\">";
+    echo "<div class=\"dropdown show\">
+                        <a class=\"btn btn-secondary dropdown-toggle\" href=\"#\" role=\"button\" id=\"dropdownMenuLinkUID" . $user["user_id"] . "\"  data-bs-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">";
+    echo getRoleFromID($user["user_role_id"]);
+    echo "</a>
+                              <div class=\"dropdown-menu\" aria-labelledby=\"dropdownMenuLinkUID" . $user["user_id"] . "\">";
+    foreach (getAllRolesBelow($login->getUserInfo()["user_role_id"]) as $role) {
+        echo "<button type=\"submit\" name=\"roleChange\" value=\"" . $role["id_pravo"] . "\" class=\"dropdown-item\" onclick='return confirm(\"Change role of " . $user["user_email"] . "  to " . $role["nazev"] . "?\")'>";
+        echo $role["nazev"] . "</button>";
+    }
+    echo " </div></div></form>";
+}
+
 if(!$login->isUserLogged()) {
     ?>
     Konference je pouze pro prihlasene cleny
     <?php
 } else {
     ?>
-    Sprava uzivatelu
+    <h3>Správa uživatelů</h3>
 
     <table class="table">
         <thead>
@@ -58,18 +75,7 @@ if(!$login->isUserLogged()) {
                     echo "<td>" . $user["user_name"] .  "</td>";
                     echo "<td>"; //ROLE SWITCH COLUMN
                     if ($user["user_email"] != $login->getUserInfo()["user_email"]) {
-                        echo "<form method=\"POST\">";
-                        echo "<input type=\"hidden\" name=\"userRoleChange\" value=\"" . $user["user_id"] . "\">";
-                        echo "<div class=\"dropdown show\">
-                        <a class=\"btn btn-secondary dropdown-toggle\" href=\"#\" role=\"button\" id=\"dropdownMenuLinkUID" . $user["user_id"] . "\"  data-bs-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">";
-                        echo getRoleFromID($user["user_role_id"]);
-                        echo "</a>
-                              <div class=\"dropdown-menu\" aria-labelledby=\"dropdownMenuLinkUID" . $user["user_id"] . "\">";
-                        foreach(getAllRolesBelow($login->getUserInfo()["user_role_id"]) as $role) {
-                            echo "<button type=\"submit\" name=\"roleChange\" value=\"" . $role["id_pravo"] . "\" class=\"dropdown-item\" onclick='return confirm(\"Change role of " . $user["user_email"] . "  to " . $role["nazev"] . "?\")'>";
-                            echo $role["nazev"] . "</button>";
-                        }
-                        echo " </div></div></form>";
+                        getSwitchRoleDropdown($user);
                     }
                     else {
                         echo getRoleFromID($user["user_role_id"]);
@@ -99,18 +105,7 @@ if(!$login->isUserLogged()) {
                     echo "<td>" . $user["user_name"] .  "</td>";
                     echo "<td>"; //ROLE SWITCH COLUMN
                     if ($user["user_role_id"] > 2) {
-                        echo "<form method=\"POST\">";
-                        echo "<input type=\"hidden\" name=\"userRoleChange\" value=\"" . $user["user_id"] . "\">";
-                        echo "<div class=\"dropdown show\">
-                        <a class=\"btn btn-secondary dropdown-toggle\" href=\"#\" role=\"button\" id=\"dropdownMenuLinkUID" . $user["user_id"] . "\"  data-bs-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">";
-                        echo getRoleFromID($user["user_role_id"]);
-                        echo "</a>
-                              <div class=\"dropdown-menu\" aria-labelledby=\"dropdownMenuLinkUID" . $user["user_id"] . "\">";
-                        foreach(getAllRolesBelow($login->getUserInfo()["user_role_id"]) as $role) {
-                            echo "<button type=\"submit\" name=\"roleChange\" value=\"" . $role["id_pravo"] . "\" class=\"dropdown-item\" onclick='return confirm(\"Change role of " . $user["user_email"] . "  to " . $role["nazev"] . "?\")'>";
-                            echo $role["nazev"] . "</button>";
-                        }
-                        echo " </div></div></form>";
+                        getSwitchRoleDropdown($user);
                     }
                     else {
                         echo getRoleFromID($user["user_role_id"]);
